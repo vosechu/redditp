@@ -9,17 +9,6 @@
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js"></script>
     <script type="text/javascript" src="/js/jquery.touchwipe.js"></script>
     <script type="text/javascript" src="/js/script.js"></script>
-    <script type="text/javascript">
-      var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-4533496-15']);
-      _gaq.push(['_trackPageview']);
-
-      (function() {
-        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-      })();
-    </script>
 </head>
 <body>
     <div class="prevArrow fadeOnIdle" title="The arrow keys work too" id="prevButton"></div>
@@ -36,18 +25,8 @@
                     <a href="https://github.com/ubershmekel/redditp" title="redditp source on github">src</a> /
                     <a href="http://www.reddit.com/r/redditp" title="who made this">blog</a>
                 </li>
-                <li>
-                    <input class="checkbox" type="checkbox" name="nsfw" id="nsfw" value="Auto" checked="true" /><label class="checkbox over18" for="nsfw"> nsfw</label>
-                </li>
-                <li>
-                    <input class="checkbox" type="checkbox" name="gif" id="gif" value="Auto" checked="true" /><label class="checkbox" for="gif"> gif</label>
-                </li>
             </ul>
             <ul class="nbmenu">
-                <li>
-                    <input class="checkbox" type="checkbox" name="autoNextSlide" id="autoNextSlide" value="Auto" checked="true"/><label class="checkbox" for="autoNextSlide"> Auto-next</label>
-                    every <input type="text" name="timeToNextSlide" id="timeToNextSlide" value="5" size="2" /> seconds
-                </li>
                 <li>
                     <a id='navboxCommentsLink' href='#' title='Comments on reddit'>comments</a>
                 </li>
@@ -64,12 +43,6 @@
             </div>
         </div>
     </div>
-    <div id="titleDiv" class='navbox clouds'>
-        <div class="collapser" data-openstate="open">-</div>
-        <h2 id='navboxTitle'>
-            <noscript>Javascript is required for redditp to work :(</noscript>
-        </h2>
-    </div>
 
     <div id="pictureSlider">
         <!-- Pictures will be injected by jQuery -->
@@ -77,17 +50,5 @@
             <!-- Empty div to be animated out, do not erase -->
         </div>
     </div>
-
-<script type="text/javascript">
-    window._idl = {};
-    _idl.variant = "modal";
-    (function() {
-        var idl = document.createElement('script');
-        idl.type = 'text/javascript';
-        idl.async = true;
-        idl.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'members.internetdefenseleague.org/include/?url=' + (_idl.url || '') + '&campaign=' + (_idl.campaign || '') + '&variant=' + (_idl.variant || 'banner');
-        document.getElementsByTagName('body')[0].appendChild(idl);
-    })();
-</script>
 </body>
 </html>

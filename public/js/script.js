@@ -79,13 +79,6 @@ $(function () {
     var loadingNextImages = false;
 
     function nextSlide() {
-        if(!nsfw) {
-            for(var i = activeIndex + 1; i < photos.length; i++) {
-                if (!photos[i].over18) {
-                    return startAnimation(i)
-                }
-            }
-        }
         if (isLastImage(activeIndex) && !loadingNextImages) {
             // the only reason we got here and there aren't more pictures yet
             // is because there are no more images to load, start over
@@ -94,26 +87,11 @@ $(function () {
         startAnimation(activeIndex + 1);
     }
     function prevSlide() {
-        if(!nsfw) {
-            for(var i = activeIndex - 1; i > 0; i--) {
-                if (!photos[i].over18) {
-                    return startAnimation(i)
-                }
-            }
-        }
         startAnimation(activeIndex - 1);
     }
 
     $('#prevButton').click(prevSlide)
     $('#nextButton').click(nextSlide)
-
-
-    var autoNextSlide = function () {
-        if (shouldAutoNextSlide) {
-            // startAnimation takes care of the setTimeout
-            nextSlide();
-        }
-    }
 
     $("#pictureSlider").touchwipe({
         // wipeLeft means the user moved his finger from right to left.
@@ -168,98 +146,6 @@ $(function () {
         }
     };
 
-    var setCookie = function (c_name, value, exdays) {
-        var exdate = new Date();
-        exdate.setDate(exdate.getDate() + exdays);
-        var c_value = escape(value) + ((exdays == null) ? "" : "; expires=" + exdate.toUTCString());
-        document.cookie = c_name + "=" + c_value;
-    }
-
-    var getCookie = function (c_name) {
-        var i, x, y;
-        var cookiesArray = document.cookie.split(";");
-        for (i = 0; i < cookiesArray.length; i++) {
-            x = cookiesArray[i].substr(0, cookiesArray[i].indexOf("="));
-            y = cookiesArray[i].substr(cookiesArray[i].indexOf("=") + 1);
-            x = x.replace(/^\s+|\s+$/g, "");
-            if (x == c_name) {
-                return unescape(y);
-            }
-        }
-    };
-
-    var resetNextSlideTimer = function () {
-        clearTimeout(nextSlideTimeoutId);
-        nextSlideTimeoutId = setTimeout(autoNextSlide, timeToNextSlide);
-    }
-
-    shouldAutoNextSlideCookie = "shouldAutoNextSlideCookie";
-    var updateAutoNext = function () {
-        shouldAutoNextSlide = $("#autoNextSlide").is(':checked')
-        setCookie(shouldAutoNextSlideCookie, shouldAutoNextSlide, cookieDays);
-        resetNextSlideTimer();
-    }
-
-    nsfwCookie = "nsfwCookie";
-    var updateNsfw = function () {
-        nsfw = $("#nsfw").is(':checked')
-        setCookie(nsfwCookie, nsfw, cookieDays);
-    }
-
-    gifCookie = "gifCookie";
-    var updateGif = function () {
-        gif = $("#gif").is(':checked')
-        setCookie(gifCookie, gif, cookieDays);
-        location.reload();
-    }
-
-    var initState = function () {
-        var nsfwByCookie = getCookie(nsfwCookie);
-        if (nsfwByCookie == undefined) {
-            nsfw = true;
-        } else {
-            nsfw = (nsfwByCookie === "true");
-            $("#nsfw").prop("checked", nsfw);
-        }
-        $('#nsfw').change(updateNsfw);
-
-        var gifByCookie = getCookie(gifCookie);
-        if (gifByCookie == undefined) {
-            gif = true;
-        } else {
-            gif = (gifByCookie === "true");
-            $("#gif").prop("checked", gif);
-        }
-        $('#gif').change(updateGif);
-
-        var autoByCookie = getCookie(shouldAutoNextSlideCookie);
-        if (autoByCookie == undefined) {
-            updateAutoNext();
-        } else {
-            shouldAutoNextSlide = (autoByCookie === "true");
-            $("#autoNextSlide").prop("checked", shouldAutoNextSlide);
-        }
-        $('#autoNextSlide').change(updateAutoNext);
-
-        var updateTimeToNextSlide = function () {
-            var val = $('#timeToNextSlide').val()
-            timeToNextSlide = parseFloat(val) * 1000;
-            setCookie(timeToNextSlideCookie, val, cookieDays);
-        }
-
-        var timeToNextSlideCookie = "timeToNextSlideCookie";
-        timeByCookie = getCookie(timeToNextSlideCookie);
-        if (timeByCookie == undefined) {
-            updateTimeToNextSlide();
-        } else {
-            timeToNextSlide = parseFloat(timeByCookie) * 1000;
-            $('#timeToNextSlide').val(timeByCookie);
-        }
-
-        $('#timeToNextSlide').keyup(updateTimeToNextSlide);
-    }
-    initState()
-
     var addNumberButton = function (numberButton) {
         var navboxUls = $(".navbox ul");
         var thisNavboxUl = navboxUls[navboxUls.length - 1];
@@ -313,9 +199,7 @@ $(function () {
     var PAGEUP = 33;
     var PAGEDOWN = 34;
     var ENTER = 13;
-    var A_KEY = 65;
     var C_KEY = 67;
-    var T_KEY = 84;
 
     // Register keypress events on the whole document
     $(document).keyup(function (e) {
@@ -333,13 +217,6 @@ $(function () {
         switch (code) {
             case C_KEY:
                 $('#controlsDiv .collapser').click();
-                break;
-            case T_KEY:
-                $('#titleDiv .collapser').click();
-                break;
-            case A_KEY:
-                $("#autoNextSlide").prop("checked", !$("#autoNextSlide").is(':checked'));
-                updateAutoNext();
                 break;
             case PAGEUP:
             case arrow.left:
@@ -365,20 +242,10 @@ $(function () {
     };
 
     var isLastImage = function(imageIndex) {
-        if(nsfw) {
-            if(imageIndex == photos.length - 1) {
-                return true
-            } else {
-                return false
-            }
-        } else {
-            // look for remaining sfw images
-            for(var i = imageIndex + 1; i < photos.length; i++) {
-                if(!photos[i].over18) {
-                    return false
-                }
-            }
+        if(imageIndex == photos.length - 1) {
             return true
+        } else {
+            return false
         }
     }
     //
@@ -387,7 +254,7 @@ $(function () {
     // Variable to store if the animation is playing or not
     var isAnimating = false;
     var startAnimation = function (imageIndex) {
-        resetNextSlideTimer();
+        // resetNextSlideTimer();
 
         // If the same number has been chosen, or the index is outside the
         // photos range, or we're already animating, do nothing
@@ -458,26 +325,6 @@ $(function () {
             isAnimating = false;
         });
     };
-
-
-
-    var verifyNsfwMakesSense = function() {
-        // Cases when you forgot NSFW off but went to /r/nsfw
-        // can cause strange bugs, let's help the user when over 80% of the
-        // content is NSFW.
-        var nsfwImages = 0
-        for(var i = 0; i < photos.length; i++) {
-            if(photos[i].over18) {
-                nsfwImages += 1
-            }
-        }
-
-        if(0.8 < nsfwImages * 1.0 / photos.length) {
-            nsfw = true
-            $("#nsfw").prop("checked", nsfw)
-        }
-    }
-
 
     var tryConvertUrl = function (url) {
         if (url.indexOf('imgur.com') >= 0) {
@@ -611,8 +458,6 @@ $(function () {
                     addImageSlide(goodImageUrl, title, commentsUrl, over18);
                 }
             });
-
-            verifyNsfwMakesSense()
 
             if (!foundOneImage) {
                 log(jsonUrl);
