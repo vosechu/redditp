@@ -195,14 +195,7 @@ $(function () {
           var title = item.data.title;
           var over18 = item.data.over_18;
           var commentsUrl = "http://www.reddit.com" + item.data.permalink;
-
-          // ignore albums and things that don't seem like image files
-          var goodImageUrl = '';
-          if (Redditp.Urls.isImageExtension(imgUrl)) {
-            goodImageUrl = imgUrl;
-          } else {
-            goodImageUrl = Redditp.Urls.tryConvertUrl(imgUrl);
-          }
+          var goodImageUrl = Redditp.Urls.validateImageUrl(imgUrl);
 
           if (goodImageUrl !== '') {
             foundOneImage = true;
@@ -322,7 +315,6 @@ $(function () {
 });
 
 Redditp.Urls = (function () {
-
   var tryConvertUrl = function (url) {
     if (url.indexOf('imgur.com') >= 0) {
       if (url.indexOf('/a/') >= 0) {
@@ -388,9 +380,20 @@ Redditp.Urls = (function () {
     return redditBaseUrl + subredditUrl + ".json?jsonp=?" + after + "&" + getVars;
   };
 
+  var validateImageUrl = function (imgUrl) {
+    // ignore albums and things that don't seem like image files
+    var goodImageUrl = '';
+    if (isImageExtension(imgUrl)) {
+      goodImageUrl = imgUrl;
+    } else {
+      goodImageUrl = tryConvertUrl(imgUrl);
+    }
+
+    return goodImageUrl;
+  };
+
   return {
     jsonUrl: jsonUrl(),
-    isImageExtension: isImageExtension,
-    tryConvertUrl: tryConvertUrl
+    validateImageUrl: validateImageUrl
   };
 })();
