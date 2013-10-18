@@ -7,27 +7,27 @@
  */
 
 var Redditp = {};
-Redditp.Buttons = {};
+Redditp.Images = {};
 Redditp.Urls = {};
 
 $(function () {
   // Control clicking of the next/prev buttons
-  $('#prevButton').click(Redditp.Buttons.prevSlide);
-  $('#nextButton').click(Redditp.Buttons.nextSlide);
+  $('#prevButton').click(Redditp.Images.prevSlide);
+  $('#nextButton').click(Redditp.Images.nextSlide);
 
   // Control swiping on mobile devices
   $("#pictureSlider").touchwipe({
     wipeLeft: function () {
-      Redditp.Buttons.nextSlide();
+      Redditp.Images.nextSlide();
     },
     wipeRight: function () {
-      Redditp.Buttons.prevSlide();
+      Redditp.Images.prevSlide();
     },
     wipeUp: function () {
-      Redditp.Buttons.nextSlide();
+      Redditp.Images.nextSlide();
     },
     wipeDown: function () {
-      Redditp.Buttons.prevSlide();
+      Redditp.Images.prevSlide();
     },
     min_move_x: 20,
     min_move_y: 20,
@@ -61,19 +61,19 @@ $(function () {
       case keys.pageup:
       case keys.left:
       case keys.up:
-        return Redditp.Buttons.prevSlide();
+        return Redditp.Images.prevSlide();
       case keys.pagedown:
       case keys.right:
       case keys.down:
       case keys.space:
-        return Redditp.Buttons.nextSlide();
+        return Redditp.Images.nextSlide();
       case keys.d_key:
         // TODO: Download image
         break;
     }
   });
 
-  Redditp.Buttons = (function () {
+  Redditp.Images = (function () {
     // Speed of the animation
     var animationSpeed = 1000;
 
@@ -134,6 +134,15 @@ $(function () {
 
       toggleNumberButton(activeIndex, false);
       toggleNumberButton(imageIndex, true);
+    };
+
+    var toggleNumberButton = function (imageIndex, turnOn) {
+      var numberButton = $('#numberButton' + (imageIndex + 1));
+      if (turnOn) {
+        numberButton.addClass('active');
+      } else {
+        numberButton.removeClass('active');
+      }
     };
 
     //
@@ -262,56 +271,43 @@ $(function () {
       addNumberButton(numberButton);
     };
 
+    // maybe checkout http://engineeredweb.com/blog/09/12/preloading-images-jquery-and-javascript/ for implementing the old precache
+    var cache = [];
+    // Arguments are image paths relative to the current page.
+    var preLoadImages = function () {
+      var args_len = arguments.length;
+      for (var i = args_len; i--;) {
+        var cacheImage = document.createElement('img');
+        cacheImage.src = arguments[i];
+        cache.push(cacheImage);
+      }
+    };
+
+    //
+    // Shows an image and plays the animation
+    //
+    var showImage = function (docElem) {
+      startAnimation(docElem.data('index'));
+    };
+
+    var addNumberButton = function (numberButton) {
+      var navboxUls = $(".navbox ul");
+      var thisNavboxUl = navboxUls[navboxUls.length - 1];
+
+      var newListItem = $("<li />").appendTo(thisNavboxUl);
+      numberButton.appendTo(newListItem);
+
+      // so li's have a space between them and can word-wrap in the box
+      navboxUls.append(document.createTextNode(' '));
+    };
+
+    getNextImages();
+
     return {
       prevSlide: prevSlide,
-      nextSlide: nextSlide,
-      getNextImages: getNextImages
+      nextSlide: nextSlide
     };
   })();
-
-  // maybe checkout http://engineeredweb.com/blog/09/12/preloading-images-jquery-and-javascript/ for implementing the old precache
-  var cache = [];
-  // Arguments are image paths relative to the current page.
-  var preLoadImages = function () {
-    var args_len = arguments.length;
-    for (var i = args_len; i--;) {
-      var cacheImage = document.createElement('img');
-      cacheImage.src = arguments[i];
-      cache.push(cacheImage);
-    }
-  };
-
-  var addNumberButton = function (numberButton) {
-    var navboxUls = $(".navbox ul");
-    var thisNavboxUl = navboxUls[navboxUls.length - 1];
-
-    var newListItem = $("<li />").appendTo(thisNavboxUl);
-    numberButton.appendTo(newListItem);
-
-    // so li's have a space between them and can word-wrap in the box
-    navboxUls.append(document.createTextNode(' '));
-  };
-
-  //
-  // Shows an image and plays the animation
-  //
-  var showImage = function (docElem) {
-    // Retrieve the index we need to use
-    var imageIndex = docElem.data("index");
-
-    startAnimation(imageIndex);
-  };
-
-  var toggleNumberButton = function (imageIndex, turnOn) {
-    var numberButton = $('#numberButton' + (imageIndex + 1));
-    if (turnOn) {
-      numberButton.addClass('active');
-    } else {
-      numberButton.removeClass('active');
-    }
-  };
-
-  Redditp.Buttons.getNextImages();
 });
 
 Redditp.Urls = (function () {
