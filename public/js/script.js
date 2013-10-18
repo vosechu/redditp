@@ -13,35 +13,11 @@ var cookieDays = 300;
 
 // Variable to store the images we need to set as background
 // which also includes some text and url's.
-var photos = []
+var photos = [];
 
 // 0-based index to set which picture to show first
 // init to -1 until the first image is loaded
 var activeIndex = -1;
-
-
-// IE doesn't have indexOf, wtf...
-if (!Array.indexOf) {
-    Array.prototype.indexOf = function (obj) {
-        for (var i = 0; i < this.length; i++) {
-            if (this[i] == obj) {
-                return i;
-            }
-        }
-        return -1;
-    }
-}
-
-// IE doesn't have console.log and fails, wtf...
-// usage: log('inside coolFunc',this,arguments);
-// http://paulirish.com/2009/log-a-lightweight-wrapper-for-consolelog/
-window.log = function () {
-    log.history = log.history || []; // store logs to an array for reference
-    log.history.push(arguments);
-    if (this.console) {
-        console.log(Array.prototype.slice.call(arguments));
-    }
-};
 
 $(function () {
 
@@ -68,7 +44,7 @@ $(function () {
             navboxVisible = true;
             $('.fadeOnIdle').fadeTo('fast', 1);
             fadeoutTimer = setTimeout(fadeoutFunction, 2000);
-        })
+        });
     };
     // this fadeout was really inconvenient on mobile phones
     // and instead the minimize buttons should be used.
@@ -90,8 +66,8 @@ $(function () {
         startAnimation(activeIndex - 1);
     }
 
-    $('#prevButton').click(prevSlide)
-    $('#nextButton').click(nextSlide)
+    $('#prevButton').click(prevSlide);
+    $('#nextButton').click(nextSlide);
 
     $("#pictureSlider").touchwipe({
         // wipeLeft means the user moved his finger from right to left.
@@ -155,7 +131,7 @@ $(function () {
 
         // so li's have a space between them and can word-wrap in the box
         navboxUls.append(document.createTextNode(' '));
-    }
+    };
 
     var addImageSlide = function (url, title, commentsLink, over18) {
         var pic = {
@@ -167,7 +143,7 @@ $(function () {
             "urltext": 'View picture',
             "commentsLink": commentsLink,
             "over18": over18
-        }
+        };
 
         preLoadImages(pic.url);
         photos.push(pic);
@@ -185,7 +161,7 @@ $(function () {
         });
         numberButton.addClass("numberButton");
         addNumberButton(numberButton);
-    }
+    };
 
     var arrow = {
         left: 37,
@@ -221,12 +197,12 @@ $(function () {
             case PAGEUP:
             case arrow.left:
             case arrow.up:
-                return prevSlide()
+                return prevSlide();
             case PAGEDOWN:
             case arrow.right:
             case arrow.down:
             case SPACE:
-                return nextSlide()
+                return nextSlide();
         }
     });
 
@@ -243,11 +219,11 @@ $(function () {
 
     var isLastImage = function(imageIndex) {
         if(imageIndex == photos.length - 1) {
-            return true
+            return true;
         } else {
-            return false
+            return false;
         }
-    }
+    };
     //
     // Starts the animation, based on the image index
     //
@@ -258,7 +234,7 @@ $(function () {
 
         // If the same number has been chosen, or the index is outside the
         // photos range, or we're already animating, do nothing
-        if (activeIndex == imageIndex || imageIndex > photos.length - 1 || imageIndex < 0 || isAnimating || photos.length == 0) {
+        if (activeIndex == imageIndex || imageIndex > photos.length - 1 || imageIndex < 0 || isAnimating || photos.length === 0) {
             return;
         }
 
@@ -281,7 +257,7 @@ $(function () {
         } else {
             numberButton.removeClass('active');
         }
-    }
+    };
 
     //
     // Animate the navigation box
@@ -306,7 +282,7 @@ $(function () {
         var photo = photos[imageIndex];
 
         // Create a new div and apply the CSS
-        var cssMap = Object();
+        var cssMap = {};
         cssMap['display'] = "none";
         cssMap['background-image'] = "url(" + photo.image + ")";
         cssMap['background-repeat'] = "no-repeat";
@@ -337,15 +313,15 @@ $(function () {
             // regexp removes /r/<sub>/ prefix if it exists
             // E.g. http://imgur.com/r/aww/x9q6yW9
             if (url === url.replace(/r\/[^ \/]+\/(\w+)/, '$1')) {
-                return ''
+                return '';
             } else {
                 return url.replace(/r\/[^ \/]+\/(\w+)/, '$1') + '.jpg';
             }
         }
 
         return '';
-    }
-    var goodExtensions = ['.jpg', '.jpeg', '.bmp', '.png']
+    };
+    var goodExtensions = ['.jpg', '.jpeg', '.bmp', '.png'];
     if ($('#gif:checked').length > 0) {
         goodExtensions.push('.gif');
     }
@@ -360,33 +336,29 @@ $(function () {
         if (goodExtensions.indexOf(extension) >= 0) {
             return true;
         } else {
-            //log("skipped bad extension: " + url);
             return false;
         }
-
-
-    }
+    };
 
     var decodeUrl = function (url) {
-        return decodeURIComponent(url.replace(/\+/g, " "))
-    }
+        return decodeURIComponent(url.replace(/\+/g, " "));
+    };
     var getRestOfUrl = function () {
         var regexS = "(/(?:(?:r)|(?:user)|(?:domain))/[^&#?]*)[?]?(.*)";
         var regex = new RegExp(regexS);
         var results = regex.exec(window.location.href);
         //log(results);
-        if (results == null) {
+        if (results === null) {
             return ["", ""];
         } else {
             return [results[1], decodeUrl(results[2])];
         }
-    }
+    };
 
     var redditBaseUrl = "http://www.reddit.com";
     var urlData = getRestOfUrl();
-    //log(urlData)
-    var subredditUrl = urlData[0]
-    var getVars = urlData[1]
+    var subredditUrl = urlData[0];
+    var getVars = urlData[1];
 
     if (getVars.length > 0) {
         getVarsQuestionMark = "?" + getVars;
@@ -429,12 +401,12 @@ $(function () {
             alert("Failed ajax, maybe a bad url? Sorry about that :(");
         };
         var handleData = function (data) {
-            redditData = data
+            redditData = data;
             // NOTE: if data.data.after is null then this causes us to start
             // from the top on the next getNextImages which is fine.
             after = "&after=" + data.data.after;
 
-            if (data.data.children.length == 0) {
+            if (data.data.children.length === 0) {
                 alert("No data from this url :(");
                 return;
             }
@@ -453,7 +425,7 @@ $(function () {
                     goodImageUrl = tryConvertUrl(imgUrl);
                 }
 
-                if (goodImageUrl != '') {
+                if (goodImageUrl !== '') {
                     foundOneImage = true;
                     addImageSlide(goodImageUrl, title, commentsUrl, over18);
                 }
@@ -461,7 +433,7 @@ $(function () {
 
             if (!foundOneImage) {
                 log(jsonUrl);
-                alert("Sorry, no displayable images found in that url :(")
+                alert("Sorry, no displayable images found in that url :(");
             }
 
             // show the first image
@@ -469,7 +441,7 @@ $(function () {
                 startAnimation(0);
             }
 
-            if (data.data.after == null) {
+            if (data.data.after === null) {
                 log("No more pages to load from this subreddit, reloading the start");
 
                 // Show the user we're starting from the top
@@ -487,7 +459,7 @@ $(function () {
             success: handleData,
             error: failedAjax
         });
-    }
+    };
 
     getNextImages();
 });
