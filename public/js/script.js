@@ -6,26 +6,28 @@
  * Author of slideshow base :      Marco Kuiper (http://www.marcofolio.net/)
  */
 
-var RedditpButtons = {};
+var Redditp = {};
+Redditp.Buttons = {};
+Redditp.Urls = {};
 
 $(function () {
   // Control clicking of the next/prev buttons
-  $('#prevButton').click(RedditpButtons.prevSlide);
-  $('#nextButton').click(RedditpButtons.nextSlide);
+  $('#prevButton').click(Redditp.Buttons.prevSlide);
+  $('#nextButton').click(Redditp.Buttons.nextSlide);
 
   // Control swiping on mobile devices
   $("#pictureSlider").touchwipe({
     wipeLeft: function () {
-      RedditpButtons.nextSlide();
+      Redditp.Buttons.nextSlide();
     },
     wipeRight: function () {
-      RedditpButtons.prevSlide();
+      Redditp.Buttons.prevSlide();
     },
     wipeUp: function () {
-      RedditpButtons.nextSlide();
+      Redditp.Buttons.nextSlide();
     },
     wipeDown: function () {
-      RedditpButtons.prevSlide();
+      Redditp.Buttons.prevSlide();
     },
     min_move_x: 20,
     min_move_y: 20,
@@ -59,19 +61,19 @@ $(function () {
       case keys.pageup:
       case keys.left:
       case keys.up:
-        return RedditpButtons.prevSlide();
+        return Redditp.Buttons.prevSlide();
       case keys.pagedown:
       case keys.right:
       case keys.down:
       case keys.space:
-        return RedditpButtons.nextSlide();
+        return Redditp.Buttons.nextSlide();
       case keys.d_key:
         // TODO: Download image
         break;
     }
   });
 
-  RedditpButtons = (function () {
+  Redditp.Buttons = (function () {
     // Speed of the animation
     var animationSpeed = 1000;
 
@@ -172,7 +174,7 @@ $(function () {
     var getNextImages = function () {
       loadingNextImages = true;
 
-      var jsonUrl = redditBaseUrl + subredditUrl + ".json?jsonp=?" + after + "&" + getVars;
+      var jsonUrl = Redditp.Urls.jsonUrl;
 
       var failedAjax = function (data) {
         alert("Failed ajax, maybe a bad url? Sorry about that :(");
@@ -196,10 +198,10 @@ $(function () {
 
           // ignore albums and things that don't seem like image files
           var goodImageUrl = '';
-          if (isImageExtension(imgUrl)) {
+          if (Redditp.Urls.isImageExtension(imgUrl)) {
             goodImageUrl = imgUrl;
           } else {
-            goodImageUrl = tryConvertUrl(imgUrl);
+            goodImageUrl = Redditp.Urls.tryConvertUrl(imgUrl);
           }
 
           if (goodImageUrl !== '') {
@@ -297,7 +299,6 @@ $(function () {
     navboxUls.append(document.createTextNode(' '));
   };
 
-
   //
   // Shows an image and plays the animation
   //
@@ -317,52 +318,55 @@ $(function () {
     }
   };
 
+  Redditp.Buttons.getNextImages();
+});
+
+Redditp.Urls = (function () {
+
   var tryConvertUrl = function (url) {
     if (url.indexOf('imgur.com') >= 0) {
       if (url.indexOf('/a/') >= 0) {
-            // albums aren't supported yet
-            return '';
-          }
-        // imgur is really nice and serves the image with whatever extension
-        // you give it. '.jpg' is arbitrary
-        // regexp removes /r/<sub>/ prefix if it exists
-        // E.g. http://imgur.com/r/aww/x9q6yW9
-        if (url === url.replace(/r\/[^ \/]+\/(\w+)/, '$1')) {
-          return '';
-        } else {
-          return url.replace(/r\/[^ \/]+\/(\w+)/, '$1') + '.jpg';
-        }
+        // albums aren't supported yet
+        return '';
       }
-
-      return '';
-    };
-    var goodExtensions = ['.jpg', '.jpeg', '.bmp', '.png'];
-    if ($('#gif:checked').length > 0) {
-      goodExtensions.push('.gif');
-    }
-    var isImageExtension = function (url) {
-      var dotLocation = url.lastIndexOf('.');
-      if (dotLocation < 0) {
-        console.log("skipped no dot: " + url);
-        return false;
-      }
-      var extension = url.substring(dotLocation);
-
-      if (goodExtensions.indexOf(extension) >= 0) {
-        return true;
+      // imgur is really nice and serves the image with whatever extension
+      // you give it. '.jpg' is arbitrary
+      // regexp removes /r/<sub>/ prefix if it exists
+      // E.g. http://imgur.com/r/aww/x9q6yW9
+      if (url === url.replace(/r\/[^ \/]+\/(\w+)/, '$1')) {
+        return '';
       } else {
-        return false;
+        return url.replace(/r\/[^ \/]+\/(\w+)/, '$1') + '.jpg';
       }
-    };
+    }
 
-    var decodeUrl = function (url) {
-      return decodeURIComponent(url.replace(/\+/g, " "));
-    };
-    var getRestOfUrl = function () {
-      var regexS = "(/(?:(?:r)|(?:user)|(?:domain))/[^&#?]*)[?]?(.*)";
-      var regex = new RegExp(regexS);
-      var results = regex.exec(window.location.href);
-    //console.log(results);
+    return '';
+  };
+
+  var goodExtensions = ['.jpg', '.jpeg', '.bmp', '.png'];
+
+  var isImageExtension = function (url) {
+    var dotLocation = url.lastIndexOf('.');
+    if (dotLocation < 0) {
+      console.log("skipped no dot: " + url);
+      return false;
+    }
+    var extension = url.substring(dotLocation);
+
+    if (goodExtensions.indexOf(extension) >= 0) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  var decodeUrl = function (url) {
+    return decodeURIComponent(url.replace(/\+/g, " "));
+  };
+  var getRestOfUrl = function () {
+    var regexS = "(/(?:(?:r)|(?:user)|(?:domain))/[^&#?]*)[?]?(.*)";
+    var regex = new RegExp(regexS);
+    var results = regex.exec(window.location.href);
     if (results === null) {
       return ["", ""];
     } else {
@@ -370,30 +374,23 @@ $(function () {
     }
   };
 
-  var redditBaseUrl = "http://www.reddit.com";
-  var urlData = getRestOfUrl();
-  var subredditUrl = urlData[0];
-  var getVars = urlData[1];
+  var jsonUrl = function () {
+    var redditBaseUrl = "http://www.reddit.com";
+    var urlData = getRestOfUrl();
+    var subredditUrl = urlData[0];
+    var getVars = urlData[1];
+    var after = "";
 
-  if (getVars.length > 0) {
-    getVarsQuestionMark = "?" + getVars;
-  } else {
-    getVarsQuestionMark = "";
-  }
+    if (subredditUrl === "") {
+      subredditUrl = "/";
+    }
 
-  var subredditName;
-  if (subredditUrl === "") {
-    subredditUrl = "/";
-    subredditName = "reddit.com" + getVarsQuestionMark;
-  } else {
-    subredditName = subredditUrl + getVarsQuestionMark;
-  }
+    return redditBaseUrl + subredditUrl + ".json?jsonp=?" + after + "&" + getVars;
+  };
 
-  visitSubredditUrl = redditBaseUrl + subredditUrl + getVarsQuestionMark;
-  $('#subredditUrl').html("<a href='" + visitSubredditUrl + "'>" + subredditName + "</a>");
-  var after = "";
-
-  document.title = "redditP - " + subredditName;
-
-  RedditpButtons.getNextImages();
-});
+  return {
+    jsonUrl: jsonUrl(),
+    isImageExtension: isImageExtension,
+    tryConvertUrl: tryConvertUrl
+  };
+})();
