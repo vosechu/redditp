@@ -18,6 +18,7 @@ Redditp.Urls = {};
 
 $(function () {
   Redditp.Events.bindAll();
+  Redditp.Events.collapseControls();
   Redditp.Images.init();
 });
 
@@ -38,15 +39,21 @@ Redditp.Events = (function () {
 
   // @public
   var bindAll = function () {
-    bindArrows();
+    bindClicks();
     bindSwipe();
     bindKeys();
   };
 
+  // @public
+  var collapseControls = function () {
+    $('.collapser').trigger('click');
+  };
+
   // Control clicking of the next/prev buttons
-  var bindArrows = function () {
-    $('#prevButton').click(Redditp.Images.prevSlide);
-    $('#nextButton').click(Redditp.Images.nextSlide);
+  var bindClicks = function () {
+    $('#prevButton').bind("click", Redditp.Images.prevSlide);
+    $('#nextButton').bind("click", Redditp.Images.nextSlide);
+    $('.collapser').bind("click", toggleCollapse);
   };
 
   // Control swiping on mobile devices
@@ -79,7 +86,7 @@ Redditp.Events = (function () {
 
       switch (code) {
         case keys.c_key:
-          $('#controlsDiv .collapser').click();
+          toggleCollapse();
           break;
         case keys.pageup:
         case keys.left:
@@ -111,8 +118,29 @@ Redditp.Events = (function () {
     $('#navboxLink')[0].dispatchEvent(evt);
   };
 
+  var toggleCollapse = function () {
+    var $this = $(this);
+    var state = $this.data('openstate');
+    if (state === "open" || typeof(state) === "undefined") {
+      $this.text("+");
+      // move to the left just enough so the collapser arrow is visible
+      var arrowLeftPoint = $this.position().left;
+      $this.parent().animate({
+        left: "-" + arrowLeftPoint + "px"
+      });
+      $this.data('openstate', "closed");
+    } else {
+      $this.text("-");
+      $this.parent().animate({
+        left: "0px"
+      });
+      $this.data('openstate', "open");
+    }
+  };
+
   return {
-    bindAll: bindAll
+    bindAll: bindAll,
+    collapseControls: collapseControls
   };
 })();
 
