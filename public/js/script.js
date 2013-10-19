@@ -11,6 +11,12 @@
 // Numbers work for nav?
 // Clicking 12 loads new photos?
 
+// Objects I'd be inclined to create:
+//   DisplayView
+//   NavControlsView
+//   Events
+//   PhotoCollection
+
 var Redditp = {};
 Redditp.Events = {};
 Redditp.Images = {};
@@ -118,6 +124,7 @@ Redditp.Events = (function () {
     $('#navboxLink')[0].dispatchEvent(evt);
   };
 
+  // Handle the collapsing of the navControls
   var toggleCollapse = function () {
     var $this = $(this);
     var state = $this.data('openstate');
@@ -164,12 +171,12 @@ Redditp.Images = (function () {
 
   // @public
   var nextSlide = function() {
-    if (isLastImage(activeIndex) && !loadingNextImages) {
-      // the only reason we got here and there aren't more pictures yet
-      // is because there are no more images to load, start over
-      return startAnimation(0);
+    if (noImagesLeft()) {
+      startAnimation(0);
     }
-    startAnimation(activeIndex + 1);
+    else {
+      startAnimation(activeIndex + 1);
+    }
   };
   // @public
   var prevSlide = function() {
@@ -180,17 +187,25 @@ Redditp.Images = (function () {
     getNextImages();
   };
 
+  // We've hit the last image and there's nothing being downloaded,
+  // loop to the front.
+  var noImagesLeft = function () {
+    return(isLastImage(activeIndex) && !loadingNextImages);
+  };
+
   // Starts the animation, based on the image index
   var startAnimation = function (imageIndex) {
-    // If the same number has been chosen, or the index is outside the
-    // photos range, or we're already animating, do nothing
-    if (activeIndex == imageIndex || imageIndex > photos.length - 1 || imageIndex < 0 || isAnimating || photos.length === 0) {
+    if (activeIndex == imageIndex) {
+      return;
+    }
+    // Out of bounds request
+    if (imageIndex > photos.length - 1 || imageIndex < 0 || isAnimating || photos.length === 0) {
       return;
     }
 
     isAnimating = true;
-    animateNavigationBox(imageIndex);
-    slideBackgroundPhoto(imageIndex);
+    updateNavControlInfo(imageIndex);
+    fadeInNewPhoto(imageIndex);
 
     // Set the active index to the used image index
     activeIndex = imageIndex;
@@ -201,29 +216,25 @@ Redditp.Images = (function () {
   };
 
   // Animate the navigation box
-  var animateNavigationBox = function (imageIndex) {
+  var updateNavControlInfo = function (imageIndex) {
     var photo = photos[imageIndex];
 
     $('#navboxLink').attr('href', photo.url).attr('title', photo.title);
     $('#navboxCommentsLink').attr('href', photo.commentsLink).attr('title', "Comments on reddit");
 
-    toggleNumberButton(activeIndex, false);
-    toggleNumberButton(imageIndex, true);
+    highlightNewNumber(activeIndex, imageIndex);
   };
 
-  var toggleNumberButton = function (imageIndex, turnOn) {
-    var numberButton = $('#numberButton' + (imageIndex + 1));
-    if (turnOn) {
-      numberButton.addClass('active');
-    } else {
-      numberButton.removeClass('active');
-    }
+  // Switch 'active' class to new image
+  var highlightNewNumber = function (oldImageIndex, newImageIndex) {
+    $('#numberButton' + (oldImageIndex + 1)).toggleClass('active');
+    $('#numberButton' + (newImageIndex + 1)).toggleClass('active');
   };
 
   // Slides the background photos
-  var slideBackgroundPhoto = function (imageIndex) {
-    // Retrieve the accompanying photo based on the index
+  var fadeInNewPhoto = function (imageIndex) {
     var photo = photos[imageIndex];
+    var oldDiv = $("#pictureSlider div");
 
     // Create a new div and apply the CSS
     var cssMap = {};
@@ -233,13 +244,11 @@ Redditp.Images = (function () {
     cssMap['background-size'] = "contain";
     cssMap['background-position'] = "center";
 
-    //var imgNode = $("<img />").attr("src", photo.image).css({opacity:"0", width: "100%", height:"100%"});
     var divNode = $("<div />").css(cssMap).addClass(photo.cssclass);
-    //imgNode.appendTo(divNode);
     divNode.prependTo("#pictureSlider");
 
     $("#pictureSlider div").fadeIn(animationSpeed);
-    var oldDiv = $("#pictureSlider div:not(:first)");
+
     oldDiv.fadeOut(animationSpeed, function () {
       oldDiv.remove();
       isAnimating = false;
@@ -270,10 +279,7 @@ Redditp.Images = (function () {
   };
 
   var handleData = function (data) {
-    redditData = data;
-    // NOTE: if data.data.after is null then this causes us to start
-    // from the top on the next getNextImages which is fine.
-    Redditp.Urls.after = "&after=" + data.data.after;
+    Redditp.Urls.nextPage(data.data.after);
 
     if (data.data.children.length === 0) {
       console.log("No data from this url :(");
@@ -380,9 +386,7 @@ Redditp.Images = (function () {
 })();
 
 Redditp.Urls = (function () {
-  // @public
   var after = "";
-
   var goodExtensions = ['.jpg', '.jpeg', '.bmp', '.png'];
 
   // @public
@@ -395,8 +399,7 @@ Redditp.Urls = (function () {
     if (subredditUrl === "") {
       subredditUrl = "/";
     }
-
-    return redditBaseUrl + subredditUrl + ".json?jsonp=?" + this.after + "&" + getVars;
+    return redditBaseUrl + subredditUrl + ".json?jsonp=?" + after + "&" + getVars;
   };
 
   // @public
@@ -410,6 +413,11 @@ Redditp.Urls = (function () {
     }
 
     return goodImageUrl;
+  };
+
+  // @public
+  var nextPage = function (newAfter) {
+    after = "&after=" + newAfter;
   };
 
   var tryConvertUrl = function (url) {
@@ -464,6 +472,6 @@ Redditp.Urls = (function () {
   return {
     jsonUrl: jsonUrl,
     validateImageUrl: validateImageUrl,
-    after: after
+    nextPage: nextPage
   };
 })();
