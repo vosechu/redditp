@@ -22,6 +22,20 @@ $(function () {
 });
 
 Redditp.Events = (function () {
+  var keys = {
+    left: 37,
+    up: 38,
+    right: 39,
+    down: 40,
+    one: 49,
+    nine: 57,
+    space: 32,
+    pageup: 33,
+    pagedown: 34,
+    enter: 13,
+    d_key: 68
+  };
+
   // @public
   var bindAll = function () {
     bindArrows();
@@ -58,20 +72,6 @@ Redditp.Events = (function () {
 
   // Control key presses
   var bindKeys = function () {
-    var keys = {
-      left: 37,
-      up: 38,
-      right: 39,
-      down: 40,
-      one: 49,
-      nine: 57,
-      space: 32,
-      pageup: 33,
-      pagedown: 34,
-      enter: 13,
-      d_key: 68
-    };
-
     $(document).keyup(function (e) {
       // More info: http://stackoverflow.com/questions/302122/jquery-event-keypress-which-key-was-pressed
       // http://stackoverflow.com/questions/1402698/binding-arrow-keys-in-js-jquery
@@ -91,10 +91,24 @@ Redditp.Events = (function () {
         case keys.space:
           return Redditp.Images.nextSlide();
         case keys.d_key:
-          // TODO: Download image
+          downloadImage();
           break;
       }
     });
+  };
+
+  // Download the image currently being shown
+  var downloadImage = function () {
+    // create a new mouse event
+    var evt = document.createEvent("MouseEvents");
+
+    // initialize all the parameters of the event
+    evt.initMouseEvent("click", true, true, window,
+      0, 0, 0, 0, 0,
+      false, true, false, false,  // ctrl, alt, shift, meta
+      0, null);
+
+    $('#navboxLink')[0].dispatchEvent(evt);
   };
 
   return {
