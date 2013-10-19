@@ -183,7 +183,7 @@ $(function () {
     var getNextImages = function () {
       loadingNextImages = true;
 
-      var jsonUrl = Redditp.Urls.jsonUrl;
+      var jsonUrl = Redditp.Urls.jsonUrl();
 
       var failedAjax = function (data) {
         alert("Failed ajax, maybe a bad url? Sorry about that :(");
@@ -192,7 +192,7 @@ $(function () {
         redditData = data;
         // NOTE: if data.data.after is null then this causes us to start
         // from the top on the next getNextImages which is fine.
-        after = "&after=" + data.data.after;
+        Redditp.Urls.after = "&after=" + data.data.after;
 
         if (data.data.children.length === 0) {
           alert("No data from this url :(");
@@ -311,6 +311,8 @@ $(function () {
 });
 
 Redditp.Urls = (function () {
+  var after = "";
+
   var tryConvertUrl = function (url) {
     if (url.indexOf('imgur.com') >= 0) {
       if (url.indexOf('/a/') >= 0) {
@@ -367,13 +369,12 @@ Redditp.Urls = (function () {
     var urlData = getRestOfUrl();
     var subredditUrl = urlData[0];
     var getVars = urlData[1];
-    var after = "";
 
     if (subredditUrl === "") {
       subredditUrl = "/";
     }
 
-    return redditBaseUrl + subredditUrl + ".json?jsonp=?" + after + "&" + getVars;
+    return redditBaseUrl + subredditUrl + ".json?jsonp=?" + this.after + "&" + getVars;
   };
 
   var validateImageUrl = function (imgUrl) {
@@ -389,7 +390,8 @@ Redditp.Urls = (function () {
   };
 
   return {
-    jsonUrl: jsonUrl(),
-    validateImageUrl: validateImageUrl
+    jsonUrl: jsonUrl,
+    validateImageUrl: validateImageUrl,
+    after: after
   };
 })();
