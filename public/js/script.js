@@ -40,7 +40,8 @@ Redditp.Events = (function () {
     pageup: 33,
     pagedown: 34,
     enter: 13,
-    d_key: 68
+    d_key: 68,
+    v_key: 86
   };
 
   // @public
@@ -103,6 +104,7 @@ Redditp.Events = (function () {
         case keys.down:
         case keys.space:
           return Redditp.Images.nextSlide();
+        case keys.v_key:
         case keys.d_key:
           downloadImage();
           break;
