@@ -63,6 +63,15 @@ Redditp.PhotoCollection = Backbone.Collection.extend({
     this.currentPhotoIndex = index;
     this.trigger('change:currentPhotoIndex');
   },
+  seekByCid: function (cid) {
+    var id;
+    _.each(this.models, function (model, index) {
+      if (model.cid === cid) {
+        id = index;
+      }
+    });
+    this.seek(id);
+  },
   getQueryString: function () {
     var regexS = "(/(?:(?:r)|(?:user)|(?:domain))/[^&#?]*)[?]?(.*)";
     var regex = new RegExp(regexS);
@@ -172,14 +181,36 @@ Redditp.PhotoView = Backbone.View.extend({
     $("#photo-" + photo.cid).addClass('active').fadeIn(this.animationSpeed);
   }
 });
-
 Redditp.NavControlsView = Backbone.View.extend({
   el: '#controlsDiv',
   events: {
-    'click .collapser': 'toggleCollapse'
+    'click .collapser': 'toggleCollapse',
+    'click .numberButton': 'seek'
   },
   initialize: function () {
-    this.listenTo(this.collection, "add");
+    this.listenTo(this.collection, "add", this.addOne);
+    this.listenTo(this.collection, "reset", this.addAll);
+    this.listenTo(this.collection, "change:currentPhotoIndex", this.change);
+  },
+  addAll: function (collection) {
+    _.each(this.collection.models, function (photo) {
+      this.addOne(photo);
+    }, this);
+  },
+  addOne: function (model) {
+    var newListItem = $("<li><a title=\"" + model.get('title') + "\" class=\"numberButton\" id=\"numberButton" + model.cid + "\">" + model.cid + "</a></li>");
+    var navboxUls = $("#allNumberButtons").append(newListItem);
+  },
+  change: function () {
+    photo = this.collection.activePhoto();
+    $('.numberButton').removeClass('active');
+    $('#numberButton' + photo.cid).addClass('active');
+
+    $('#navboxLink').attr('href', photo.url).attr('title', photo.title);
+    $('#navboxCommentsLink').attr('href', photo.commentsLink).attr('title', "Comments on reddit");
+  },
+  seek: function (e) {
+    this.collection.seekByCid(e.currentTarget.innerText);
   },
   toggleCollapse: function (e) {
     target = $('#controlsDiv .collapser');
@@ -200,6 +231,18 @@ Redditp.NavControlsView = Backbone.View.extend({
       target.data('openstate', "open");
     }
   },
+  downloadImage: function () {
+    // create a new mouse event
+    var evt = document.createEvent("MouseEvents");
+
+    // initialize all the parameters of the event
+    evt.initMouseEvent("click", true, true, window,
+      0, 0, 0, 0, 0,
+      false, true, false, false,  // ctrl, alt, shift, meta
+      0, null);
+
+    $('#navboxLink')[0].dispatchEvent(evt);
+  }
 });
 Redditp.KeysController = Backbone.View.extend({
   el: document,
@@ -241,21 +284,9 @@ Redditp.KeysController = Backbone.View.extend({
         return this.collection.next();
       case this.keys.v_key:
       case this.keys.d_key:
-        this.downloadImage();
+        mainView.navControlsView.downloadImage();
         break;
     }
-  },
-  downloadImage: function () {
-    // create a new mouse event
-    var evt = document.createEvent("MouseEvents");
-
-    // initialize all the parameters of the event
-    evt.initMouseEvent("click", true, true, window,
-      0, 0, 0, 0, 0,
-      false, true, false, false,  // ctrl, alt, shift, meta
-      0, null);
-
-    $('#navboxLink')[0].dispatchEvent(evt);
   }
 });
 Redditp.ArrowsView = Backbone.View.extend({
