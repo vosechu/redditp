@@ -47,6 +47,10 @@ Redditp.PhotoCollection = Backbone.Collection.extend({
     return redditBaseUrl + subredditUrl + ".json?jsonp=?&after=" + this.after + "&" + urlOptions;
   },
   activePhoto: function () {
+    // Pre-emptively go out and fetch new models
+    if (this.currentPhotoIndex > (this.models.length - 5)) {
+      this.fetch({remove: false});
+    }
     return this.models[this.currentPhotoIndex];
   },
   next: function () {
@@ -77,6 +81,7 @@ Redditp.PhotoCollection = Backbone.Collection.extend({
     return posts;
   },
   postsWithImages: function (response) {
+    // Pull the child data into an array
     var posts = _.map(response.data.children, function (post) {
       return post.data;
     }, this);
@@ -84,6 +89,13 @@ Redditp.PhotoCollection = Backbone.Collection.extend({
     // Throw out any posts that don't look like images
     var postsWithImages =  _.filter(posts, function (post) {
       return this.probablyImage(post.url);
+    }, this);
+
+    // Add extension to links to force them to download as image from imgur
+    // FIXME: cleanup to only add when needed and from imgur
+    postsWithImages = _.map(posts, function(post) {
+      post.url += '.jpg';
+      return post;
     }, this);
 
     return postsWithImages;
@@ -109,15 +121,16 @@ Redditp.WindowView = Backbone.View.extend({
   el: 'body',
 
   initialize: function () {
+    photoView = new Redditp.PhotoView({collection: this.collection});
+    navControlsView = new Redditp.NavControlsView({collection: this.collection});
+    arrowsView = new Redditp.ArrowsView({collection: this.collection});
+    KeysController = new Redditp.KeysController({collection: this.collection});
+
     this.listenTo(this.collection, "reset", this.render);
     this.collection.fetch({remove: false, reset: true});
   },
 
   render: function () {
-    photoView = new Redditp.PhotoView({collection: this.collection});
-    navControlsView = new Redditp.NavControlsView({collection: this.collection});
-    arrowsView = new Redditp.ArrowsView({collection: this.collection});
-    KeysController = new Redditp.KeysController({collection: this.collection});
     this.collection.next();
   }
 });
@@ -126,13 +139,18 @@ Redditp.PhotoView = Backbone.View.extend({
   el: '#pictureSlider',
 
   initialize: function() {
-    this.listenTo(this.collection, "change:currentPhotoIndex", this.render);
+    this.listenTo(this.collection, "add", this.addOne);
+    this.listenTo(this.collection, "reset", this.addAll);
+    this.listenTo(this.collection, "change:currentPhotoIndex", this.change);
   },
 
-  render: function() {
-    var photo = this.collection.activePhoto();
-    var oldDiv = $("#pictureSlider div");
+  addAll: function () {
+    _.each(this.collection.models, function (photo) {
+      this.addOne(photo);
+    }, this);
+  },
 
+  addOne: function(photo) {
     // Create a new div and apply the CSS
     var cssMap = {};
     cssMap['display'] = "none";
@@ -141,14 +159,17 @@ Redditp.PhotoView = Backbone.View.extend({
     cssMap['background-size'] = "contain";
     cssMap['background-position'] = "center";
 
-    var divNode = $("<div />").css(cssMap).addClass(photo.cssclass);
+    var divNode = $("<div class=\"photo\" id=\"photo-" + photo.cid + "\" />").css(cssMap);
 
-    divNode.prependTo(this.$el);
-    $("div", this.$el).fadeIn(this.animationSpeed);
+    this.$el.append(divNode);
+  },
 
-    oldDiv.fadeOut(this.animationSpeed, function () {
-      oldDiv.remove();
-    });
+  change: function () {
+    var photo = this.collection.activePhoto();
+    var oldPhoto = $('.photo.active');
+
+    oldPhoto.removeClass('active').hide();
+    $("#photo-" + photo.cid).addClass('active').fadeIn(this.animationSpeed);
   }
 });
 
