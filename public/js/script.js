@@ -54,11 +54,13 @@ Redditp.PhotoCollection = Backbone.Collection.extend({
     return this.models[this.currentPhotoIndex];
   },
   next: function () {
-    this.currentPhotoIndex = (this.currentPhotoIndex + 1) % this.models.length;
-    this.trigger('change:currentPhotoIndex');
+    this.seek(this.currentPhotoIndex + 1);
   },
   prev: function () {
-    this.currentPhotoIndex = this.currentPhotoIndex - 1;
+    this.seek(this.currentPhotoIndex - 1);
+  },
+  seek: function (index) {
+    this.currentPhotoIndex = index;
     this.trigger('change:currentPhotoIndex');
   },
   getQueryString: function () {
@@ -115,16 +117,14 @@ Redditp.PhotoCollection = Backbone.Collection.extend({
     }
   }
 });
-
-
 Redditp.WindowView = Backbone.View.extend({
   el: 'body',
 
   initialize: function () {
-    photoView = new Redditp.PhotoView({collection: this.collection});
-    navControlsView = new Redditp.NavControlsView({collection: this.collection});
-    arrowsView = new Redditp.ArrowsView({collection: this.collection});
-    KeysController = new Redditp.KeysController({collection: this.collection});
+    this.photoView = new Redditp.PhotoView({collection: this.collection});
+    this.navControlsView = new Redditp.NavControlsView({collection: this.collection});
+    this.arrowsView = new Redditp.ArrowsView({collection: this.collection});
+    this.keysController = new Redditp.KeysController({collection: this.collection});
 
     this.listenTo(this.collection, "reset", this.render);
     this.collection.fetch({remove: false, reset: true});
@@ -175,10 +175,31 @@ Redditp.PhotoView = Backbone.View.extend({
 
 Redditp.NavControlsView = Backbone.View.extend({
   el: '#controlsDiv',
-
+  events: {
+    'click .collapser': 'toggleCollapse'
+  },
   initialize: function () {
     this.listenTo(this.collection, "add");
-  }
+  },
+  toggleCollapse: function (e) {
+    target = $('#controlsDiv .collapser');
+    var state = target.data('openstate');
+    if (state === "open" || typeof(state) === "undefined") {
+      target.text("+");
+      // move to the left just enough so the collapser arrow is visible
+      var arrowLeftPoint = target.position().left;
+      target.parent().animate({
+        left: "-" + arrowLeftPoint + "px"
+      });
+      target.data('openstate', "closed");
+    } else {
+      target.text("-");
+      target.parent().animate({
+        left: "0px"
+      });
+      target.data('openstate', "open");
+    }
+  },
 });
 Redditp.KeysController = Backbone.View.extend({
   el: document,
@@ -207,7 +228,7 @@ Redditp.KeysController = Backbone.View.extend({
 
     switch (code) {
       case this.keys.c_key:
-        this.toggleCollapse();
+        mainView.navControlsView.toggleCollapse();
         break;
       case this.keys.pageup:
       case this.keys.left:
@@ -222,25 +243,6 @@ Redditp.KeysController = Backbone.View.extend({
       case this.keys.d_key:
         this.downloadImage();
         break;
-    }
-  },
-  toggleCollapse: function () {
-    var $this = $(this);
-    var state = $this.data('openstate');
-    if (state === "open" || typeof(state) === "undefined") {
-      $this.text("+");
-      // move to the left just enough so the collapser arrow is visible
-      var arrowLeftPoint = $this.position().left;
-      $this.parent().animate({
-        left: "-" + arrowLeftPoint + "px"
-      });
-      $this.data('openstate', "closed");
-    } else {
-      $this.text("-");
-      $this.parent().animate({
-        left: "0px"
-      });
-      $this.data('openstate', "open");
     }
   },
   downloadImage: function () {
@@ -267,26 +269,7 @@ Redditp.ArrowsView = Backbone.View.extend({
 });
 
 // Redditp.Events = (function () {
-//   var keys = {
-//     left: 37,
-//     up: 38,
-//     right: 39,
-//     down: 40,
-//     one: 49,
-//     nine: 57,
-//     space: 32,
-//     pageup: 33,
-//     pagedown: 34,
-//     enter: 13,
-//     d_key: 68
-//   };
 
-//   // @public
-//   var addEventListenerAll = function () {
-//     addEventListenerClicks();
-//     addEventListenerSwipe();
-//     addEventListenerKeys();
-//   };
 
 //   // @public
 //   var collapseControls = function () {
