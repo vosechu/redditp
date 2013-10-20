@@ -6,27 +6,9 @@
  * Author of slideshow base :      Marco Kuiper (http://www.marcofolio.net/)
  */
 
-// Tests
-// Keys work for nav?
-// Numbers work for nav?
-// Clicking 12 loads new photos?
-
-// Objects I'd be inclined to create:
-//   DisplayView
-//   NavControlsView
-//   Events
-//   PhotoCollection
-
 var Redditp = {};
-// Redditp.Events = {};
-// Redditp.Images = {};
-// Redditp.Urls = {};
 
 $(function () {
-  // Redditp.Events.addEventListenerAll();
-  // Redditp.Events.collapseControls();
-  // Redditp.Images.init();
-
   window.photos = new Redditp.PhotoCollection();
   window.mainView = new Redditp.WindowView({collection: window.photos});
 });
@@ -183,6 +165,7 @@ Redditp.PhotoView = Backbone.View.extend({
 });
 Redditp.NavControlsView = Backbone.View.extend({
   el: '#controlsDiv',
+  template: _.template("<li><a title=\"<%= title %>\" class=\"numberButton\" data-cid=\"<%= cid %>\" id=\"numberButton<%= cid %>\"><%= subcid %></a></li>"),
   events: {
     'click .collapser': 'toggleCollapse',
     'click .numberButton': 'seek'
@@ -198,7 +181,7 @@ Redditp.NavControlsView = Backbone.View.extend({
     }, this);
   },
   addOne: function (model) {
-    var newListItem = $("<li><a title=\"" + model.get('title') + "\" class=\"numberButton\" id=\"numberButton" + model.cid + "\">" + model.cid + "</a></li>");
+    var newListItem = $(this.template({title: model.get('title'), cid: model.cid, subcid: model.cid.replace(/c/, '')}));
     var navboxUls = $("#allNumberButtons").append(newListItem);
   },
   change: function () {
@@ -206,11 +189,11 @@ Redditp.NavControlsView = Backbone.View.extend({
     $('.numberButton').removeClass('active');
     $('#numberButton' + photo.cid).addClass('active');
 
-    $('#navboxLink').attr('href', photo.url).attr('title', photo.title);
-    $('#navboxCommentsLink').attr('href', photo.commentsLink).attr('title', "Comments on reddit");
+    $('#navboxLink').attr('href', photo.get('url')).attr('title', photo.get('title'));
+    $('#navboxCommentsLink').attr('href', "http://www.reddit.com" + photo.get('permalink')).attr('title', "Comments on reddit");
   },
   seek: function (e) {
-    this.collection.seekByCid(e.currentTarget.innerText);
+    this.collection.seekByCid($(e.currentTarget).data('cid'));
   },
   toggleCollapse: function (e) {
     target = $('#controlsDiv .collapser');
