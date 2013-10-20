@@ -181,13 +181,79 @@ Redditp.NavControlsView = Backbone.View.extend({
   }
 });
 Redditp.KeysController = Backbone.View.extend({
-  el: 'body',
-  events: {
-    'keydown :input': 'logKey',
-    'keypress :input': 'logKey'
+  el: document,
+  keys: {
+    left: 37,
+    up: 38,
+    right: 39,
+    down: 40,
+    one: 49,
+    nine: 57,
+    space: 32,
+    pageup: 33,
+    pagedown: 34,
+    enter: 13,
+    c_key: 67,
+    d_key: 68,
+    v_key: 86
   },
-  logKey: function(e) {
-    console.log(e.type, e.keyCode);
+  events: {
+    keydown: 'respondToKeyPress'
+  },
+  initialize: function () {
+  },
+  respondToKeyPress: function (e) {
+    var code = (e.keyCode ? e.keyCode : e.which);
+
+    switch (code) {
+      case this.keys.c_key:
+        this.toggleCollapse();
+        break;
+      case this.keys.pageup:
+      case this.keys.left:
+      case this.keys.up:
+        return this.collection.prev();
+      case this.keys.pagedown:
+      case this.keys.right:
+      case this.keys.down:
+      case this.keys.space:
+        return this.collection.next();
+      case this.keys.v_key:
+      case this.keys.d_key:
+        this.downloadImage();
+        break;
+    }
+  },
+  toggleCollapse: function () {
+    var $this = $(this);
+    var state = $this.data('openstate');
+    if (state === "open" || typeof(state) === "undefined") {
+      $this.text("+");
+      // move to the left just enough so the collapser arrow is visible
+      var arrowLeftPoint = $this.position().left;
+      $this.parent().animate({
+        left: "-" + arrowLeftPoint + "px"
+      });
+      $this.data('openstate', "closed");
+    } else {
+      $this.text("-");
+      $this.parent().animate({
+        left: "0px"
+      });
+      $this.data('openstate', "open");
+    }
+  },
+  downloadImage: function () {
+    // create a new mouse event
+    var evt = document.createEvent("MouseEvents");
+
+    // initialize all the parameters of the event
+    evt.initMouseEvent("click", true, true, window,
+      0, 0, 0, 0, 0,
+      false, true, false, false,  // ctrl, alt, shift, meta
+      0, null);
+
+    $('#navboxLink')[0].dispatchEvent(evt);
   }
 });
 Redditp.ArrowsView = Backbone.View.extend({
