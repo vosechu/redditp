@@ -98,13 +98,13 @@ Redditp.PhotoCollection = Backbone.Collection.extend({
     }, this);
 
     // Throw out any posts that don't look like images
-    var postsWithImages =  _.filter(posts, function (post) {
+    posts =  _.filter(posts, function (post) {
       return this.probablyImage(post.url);
     }, this);
 
     // Add extension to links to force them to download as image from imgur
     // FIXME: cleanup to only add when needed and from imgur
-    postsWithImages = _.map(posts, function(post) {
+    posts = _.map(posts, function (post) {
       if (this.hasImgurDomain(post.url)) {
         post.url += '.jpg';
       }
