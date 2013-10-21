@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>RedditP</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+    <ul class="sections">
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h1">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <h1>RedditP</h1>
+<h2>a one-page, full-screen image viewer for Reddit.com</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>Documentation &amp; Examples at bottom</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+$(<span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>The <code>PhotoCollection</code> is responsible for holding a pointer to the currently
+displayed photo as well as managing background loading of images</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  window.photos = <span class="keyword">new</span> Redditp.PhotoCollection();</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>The <code>mainView</code> is responsible for bootstrapping all the views and
+watchers as well as kicking off the initial fetch when all the
+views are in place</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  window.mainView = <span class="keyword">new</span> Redditp.WindowView({collection: window.photos});
+
+});
+
+<span class="keyword">var</span> Redditp = {};
+
+Redditp.Photo = Backbone.Model.extend({});
+
+Redditp.PhotoCollection = Backbone.Collection.extend({
+
+  model: Redditp.Photo,
+  nextPageId: <span class="string">''</span>,
+  currentPhotoIndex: -<span class="number">1</span>,</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p><code>url</code> and <code>getQueryString</code> inspect the current document to determine
+which subreddit(s) you want to look at. In addition, we store the
+value that Reddit sends back for the next page which is not a simple
+sequential number.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  url: <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span>
+    <span class="keyword">var</span> redditBaseUrl = <span class="string">"http://www.reddit.com"</span>;
+    <span class="keyword">var</span> urlData = <span class="keyword">this</span>.getQueryString();
+    <span class="keyword">var</span> subredditUrl = urlData[<span class="number">0</span>];
+    <span class="keyword">var</span> urlOptions = urlData[<span class="number">1</span>];
+
+    <span class="keyword">if</span> (subredditUrl === <span class="string">""</span>) {
+      subredditUrl = <span class="string">"/"</span>;
+    }
+    <span class="keyword">return</span> redditBaseUrl + subredditUrl + <span class="string">".json?jsonp=?&amp;after="</span> + <span class="keyword">this</span>.nextPageId + <span class="string">"&amp;"</span> + urlOptions;
+  },
+  getQueryString: <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span>
+    <span class="keyword">var</span> regexS = <span class="string">"(/(?:(?:r)|(?:user)|(?:domain))/[^&amp;#?]*)[?]?(.*)"</span>;
+    <span class="keyword">var</span> regex = <span class="keyword">new</span> RegExp(regexS);
+    <span class="keyword">var</span> results = regex.exec(window.location.href);
+    <span class="keyword">if</span> (results === <span class="literal">null</span>) {
+      <span class="keyword">return</span> [<span class="string">""</span>, <span class="string">""</span>];
+    } <span class="keyword">else</span> {
+      <span class="keyword">return</span> [results[<span class="number">1</span>], decodeURIComponent(results[<span class="number">2</span>].replace(<span class="regexp">/\+/g</span>, <span class="string">" "</span>))];
+    }
+  },
+
+  activePhoto: <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>Pre-emptively go out and fetch new models</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">if</span> (<span class="keyword">this</span>.currentPhotoIndex &gt; (<span class="keyword">this</span>.models.length - <span class="number">5</span>)) {
+      <span class="keyword">this</span>.fetch({remove: <span class="literal">false</span>});
+    }
+    <span class="keyword">return</span> <span class="keyword">this</span>.models[<span class="keyword">this</span>.currentPhotoIndex];
+  },
+
+  seek: <span class="function"><span class="keyword">function</span> <span class="params">(index)</span> {</span>
+    <span class="keyword">this</span>.currentPhotoIndex = index;
+    <span class="keyword">this</span>.trigger(<span class="string">'change:currentPhotoIndex'</span>);
+  },
+  next: <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span>
+    <span class="keyword">this</span>.seek(<span class="keyword">this</span>.currentPhotoIndex + <span class="number">1</span>);
+  },
+  prev: <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span>
+    <span class="keyword">this</span>.seek(<span class="keyword">this</span>.currentPhotoIndex - <span class="number">1</span>);
+  },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>TODO: Switch to using cid as the index instead of currentPhotoIndex</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  seekByCid: <span class="function"><span class="keyword">function</span> <span class="params">(cid)</span> {</span>
+    <span class="keyword">var</span> id;
+    _.each(<span class="keyword">this</span>.models, <span class="function"><span class="keyword">function</span> <span class="params">(model, index)</span> {</span>
+      <span class="keyword">if</span> (model.cid === cid) {
+        id = index;
+      }
+    });
+    <span class="keyword">this</span>.seek(id);
+  },
+
+  parse: <span class="function"><span class="keyword">function</span> <span class="params">(response, options)</span> {</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>Store the next page in the collection object</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">this</span>.nextPageId = response.data.after;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>Create array of model attributes</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">var</span> posts = <span class="keyword">this</span>.postsWithImages(response);
+
+    <span class="keyword">return</span> posts;
+  },
+  postsWithImages: <span class="function"><span class="keyword">function</span> <span class="params">(response)</span> {</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>Pull the child data into an array</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">var</span> posts = _.map(response.data.children, <span class="function"><span class="keyword">function</span> <span class="params">(post)</span> {</span>
+      <span class="keyword">return</span> post.data;
+    }, <span class="keyword">this</span>);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>Throw out any posts that don&#39;t look like images</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">var</span> postsWithImages =  _.filter(posts, <span class="function"><span class="keyword">function</span> <span class="params">(post)</span> {</span>
+      <span class="keyword">return</span> <span class="keyword">this</span>.probablyImage(post.url);
+    }, <span class="keyword">this</span>);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p>Add extension to links to force them to download as image from imgur
+FIXME: cleanup to only add when needed and from imgur</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    postsWithImages = _.map(posts, <span class="keyword">function</span>(post) {
+      post.url += <span class="string">'.jpg'</span>;
+      <span class="keyword">return</span> post;
+    }, <span class="keyword">this</span>);
+
+    <span class="keyword">return</span> postsWithImages;
+  },
+  probablyImage: <span class="function"><span class="keyword">function</span> <span class="params">(url)</span> {</span>
+    <span class="keyword">return</span> (<span class="keyword">typeof</span>(url) !== <span class="string">'undefined'</span> &amp;&amp;
+      url !== <span class="string">''</span> &amp;&amp;
+      ( <span class="keyword">this</span>.hasImageExtension(url) ||
+        <span class="keyword">this</span>.hasImgurDomain(url)));
+  },
+  hasImageExtension: <span class="function"><span class="keyword">function</span> <span class="params">(url)</span> {</span>
+    <span class="keyword">return</span> !!(<span class="regexp">/(jpg|png|jpeg|bmp)$/</span>).exec(url);
+  },
+  hasImgurDomain: <span class="function"><span class="keyword">function</span> <span class="params">(url)</span> {</span>
+    <span class="keyword">if</span> (!!(<span class="regexp">/imgur.com\//</span>).exec(url)) {
+      <span class="keyword">return</span> !(<span class="regexp">/imgur.com\/a\//</span>).exec(url);
+    }
+  }
+
+});
+
+Redditp.WindowView = Backbone.View.extend({
+
+  el: <span class="string">'body'</span>,
+
+  initialize: <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p>Setup all views and start all the watchers</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">this</span>.photoView = <span class="keyword">new</span> Redditp.PhotoView({collection: <span class="keyword">this</span>.collection});
+    <span class="keyword">this</span>.navControlsView = <span class="keyword">new</span> Redditp.NavControlsView({collection: <span class="keyword">this</span>.collection});
+    <span class="keyword">this</span>.arrowsView = <span class="keyword">new</span> Redditp.ArrowsView({collection: <span class="keyword">this</span>.collection});
+    <span class="keyword">this</span>.keysController = <span class="keyword">new</span> Redditp.KeysController({collection: <span class="keyword">this</span>.collection});</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p>When the first load is finished, call reset. This will tell the
+collection to load up the first image</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">this</span>.listenTo(<span class="keyword">this</span>.collection, <span class="string">"reset"</span>, <span class="keyword">this</span>.showFirstImage);
+    <span class="keyword">this</span>.collection.fetch({remove: <span class="literal">false</span>, reset: <span class="literal">true</span>});
+  },
+
+  showFirstImage: <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span>
+    <span class="keyword">this</span>.collection.next();
+  }
+
+});
+
+Redditp.PhotoView = Backbone.View.extend({
+
+  fadeInSpeed: <span class="number">1000</span>,
+  el: <span class="string">'#pictureSlider'</span>,
+  template: _.template(<span class="string">"&lt;div class=\"photo\" id=\"photo-&lt;%= cid %&gt;\" /&gt;"</span>),
+
+  initialize: <span class="keyword">function</span>() {
+    <span class="keyword">this</span>.listenTo(<span class="keyword">this</span>.collection, <span class="string">"add"</span>, <span class="keyword">this</span>.addOne);
+    <span class="keyword">this</span>.listenTo(<span class="keyword">this</span>.collection, <span class="string">"reset"</span>, <span class="keyword">this</span>.addAll);
+    <span class="keyword">this</span>.listenTo(<span class="keyword">this</span>.collection, <span class="string">"change:currentPhotoIndex"</span>, <span class="keyword">this</span>.change);
+  },
+
+  addAll: <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span>
+    _.each(<span class="keyword">this</span>.collection.models, <span class="function"><span class="keyword">function</span> <span class="params">(photo)</span> {</span>
+      <span class="keyword">this</span>.addOne(photo);
+    }, <span class="keyword">this</span>);
+  },
+
+  addOne: <span class="keyword">function</span>(photo) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-15">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-15">&#182;</a>
+              </div>
+              <p>Create a new div and apply the CSS</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">var</span> cssMap = {};
+    cssMap[<span class="string">'display'</span>] = <span class="string">"none"</span>;
+    cssMap[<span class="string">'background-image'</span>] = <span class="string">"url("</span> + photo.get(<span class="string">'url'</span>) + <span class="string">")"</span>;
+    cssMap[<span class="string">'background-repeat'</span>] = <span class="string">"no-repeat"</span>;
+    cssMap[<span class="string">'background-size'</span>] = <span class="string">"contain"</span>;
+    cssMap[<span class="string">'background-position'</span>] = <span class="string">"center"</span>;
+
+    <span class="keyword">var</span> divNode = $(<span class="keyword">this</span>.template({cid: photo.cid})).css(cssMap);
+
+    <span class="keyword">this</span>.$el.append(divNode);
+  },
+
+  change: <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span>
+    <span class="keyword">var</span> photo = <span class="keyword">this</span>.collection.activePhoto();
+    <span class="keyword">var</span> oldPhoto = $(<span class="string">'.photo.active'</span>);
+
+    oldPhoto.removeClass(<span class="string">'active'</span>).hide();
+    $(<span class="string">"#photo-"</span> + photo.cid).addClass(<span class="string">'active'</span>).fadeIn(<span class="keyword">this</span>.fadeInSpeed);
+  }
+
+});
+
+Redditp.NavControlsView = Backbone.View.extend({
+
+  el: <span class="string">'#controlsDiv'</span>,
+  template: _.template(<span class="string">"&lt;li&gt;&lt;a title=\"&lt;%= title %&gt;\" class=\"numberButton\" data-cid=\"&lt;%= cid %&gt;\" id=\"numberButton&lt;%= cid %&gt;\"&gt;&lt;%= subcid %&gt;&lt;/a&gt;&lt;/li&gt;"</span>),
+
+  events: {
+    <span class="string">'click .collapser'</span>: <span class="string">'toggleCollapse'</span>,
+    <span class="string">'click .numberButton'</span>: <span class="string">'seek'</span>
+  },
+
+  initialize: <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span>
+    <span class="keyword">this</span>.listenTo(<span class="keyword">this</span>.collection, <span class="string">"add"</span>, <span class="keyword">this</span>.addOne);
+    <span class="keyword">this</span>.listenTo(<span class="keyword">this</span>.collection, <span class="string">"reset"</span>, <span class="keyword">this</span>.addAll);
+    <span class="keyword">this</span>.listenTo(<span class="keyword">this</span>.collection, <span class="string">"change:currentPhotoIndex"</span>, <span class="keyword">this</span>.change);
+  },
+
+  addAll: <span class="function"><span class="keyword">function</span> <span class="params">(collection)</span> {</span>
+    _.each(<span class="keyword">this</span>.collection.models, <span class="function"><span class="keyword">function</span> <span class="params">(photo)</span> {</span>
+      <span class="keyword">this</span>.addOne(photo);
+    }, <span class="keyword">this</span>);
+  },
+
+  addOne: <span class="function"><span class="keyword">function</span> <span class="params">(model)</span> {</span>
+    <span class="keyword">var</span> newListItem = $(<span class="keyword">this</span>.template({title: model.get(<span class="string">'title'</span>), cid: model.cid, subcid: model.cid.replace(<span class="regexp">/c/</span>, <span class="string">''</span>)}));
+    <span class="keyword">var</span> navboxUls = $(<span class="string">"#allNumberButtons"</span>).append(newListItem);
+  },
+
+  change: <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span>
+    photo = <span class="keyword">this</span>.collection.activePhoto();</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-16">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-16">&#182;</a>
+              </div>
+              <p>Remove active from all buttons, add it on the new button</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    $(<span class="string">'.numberButton'</span>).removeClass(<span class="string">'active'</span>);
+    $(<span class="string">'#numberButton'</span> + photo.cid).addClass(<span class="string">'active'</span>);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-17">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-17">&#182;</a>
+              </div>
+              <p>Update the urls for the comment and image link</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    $(<span class="string">'#navboxLink'</span>).attr(<span class="string">'href'</span>, photo.get(<span class="string">'url'</span>)).attr(<span class="string">'title'</span>, photo.get(<span class="string">'title'</span>));
+    $(<span class="string">'#navboxCommentsLink'</span>).attr(<span class="string">'href'</span>, <span class="string">"http://www.reddit.com"</span> + photo.get(<span class="string">'permalink'</span>)).attr(<span class="string">'title'</span>, <span class="string">"Comments on reddit"</span>);
+  },
+
+  seek: <span class="function"><span class="keyword">function</span> <span class="params">(e)</span> {</span>
+    <span class="keyword">this</span>.collection.seekByCid($(e.currentTarget).data(<span class="string">'cid'</span>));
+  },
+
+  toggleCollapse: <span class="function"><span class="keyword">function</span> <span class="params">(e)</span> {</span>
+    target = $(<span class="string">'#controlsDiv .collapser'</span>);
+    <span class="keyword">var</span> state = target.data(<span class="string">'openstate'</span>);
+    <span class="keyword">if</span> (state === <span class="string">"open"</span> || <span class="keyword">typeof</span>(state) === <span class="string">"undefined"</span>) {
+      target.text(<span class="string">"+"</span>);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-18">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-18">&#182;</a>
+              </div>
+              <p>move to the left just enough so the collapser arrow is visible</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      <span class="keyword">var</span> arrowLeftPoint = target.position().left;
+      target.parent().animate({
+        left: <span class="string">"-"</span> + arrowLeftPoint + <span class="string">"px"</span>
+      });
+      target.data(<span class="string">'openstate'</span>, <span class="string">"closed"</span>);
+    } <span class="keyword">else</span> {
+      target.text(<span class="string">"-"</span>);
+      target.parent().animate({
+        left: <span class="string">"0px"</span>
+      });
+      target.data(<span class="string">'openstate'</span>, <span class="string">"open"</span>);
+    }
+  },
+
+  downloadImage: <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-19">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-19">&#182;</a>
+              </div>
+              <p>create a new mouse event</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">var</span> evt = document.createEvent(<span class="string">"MouseEvents"</span>);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-20">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-20">&#182;</a>
+              </div>
+              <p>initialize all the parameters of the event</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    evt.initMouseEvent(<span class="string">"click"</span>, <span class="literal">true</span>, <span class="literal">true</span>, window,
+      <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>,
+      <span class="literal">false</span>, <span class="literal">true</span>, <span class="literal">false</span>, <span class="literal">false</span>,  <span class="comment">// ctrl, alt, shift, meta</span>
+      <span class="number">0</span>, <span class="literal">null</span>);
+
+    $(<span class="string">'#navboxLink'</span>)[<span class="number">0</span>].dispatchEvent(evt);
+  }
+
+});
+
+Redditp.KeysController = Backbone.View.extend({
+
+  el: document,
+  keys: {
+    left: <span class="number">37</span>,
+    up: <span class="number">38</span>,
+    right: <span class="number">39</span>,
+    down: <span class="number">40</span>,
+    one: <span class="number">49</span>,
+    nine: <span class="number">57</span>,
+    space: <span class="number">32</span>,
+    pageup: <span class="number">33</span>,
+    pagedown: <span class="number">34</span>,
+    enter: <span class="number">13</span>,
+    c_key: <span class="number">67</span>,
+    d_key: <span class="number">68</span>,
+    v_key: <span class="number">86</span>
+  },
+
+  events: {
+    keydown: <span class="string">'respondToKeyPress'</span>
+  },
+
+  respondToKeyPress: <span class="function"><span class="keyword">function</span> <span class="params">(e)</span> {</span>
+    <span class="keyword">var</span> code = (e.keyCode ? e.keyCode : e.which);
+
+    <span class="keyword">switch</span> (code) {
+      <span class="keyword">case</span> <span class="keyword">this</span>.keys.c_key:
+        mainView.navControlsView.toggleCollapse();
+        <span class="keyword">break</span>;
+      <span class="keyword">case</span> <span class="keyword">this</span>.keys.pageup:
+      <span class="keyword">case</span> <span class="keyword">this</span>.keys.left:
+      <span class="keyword">case</span> <span class="keyword">this</span>.keys.up:
+        <span class="keyword">return</span> <span class="keyword">this</span>.collection.prev();
+      <span class="keyword">case</span> <span class="keyword">this</span>.keys.pagedown:
+      <span class="keyword">case</span> <span class="keyword">this</span>.keys.right:
+      <span class="keyword">case</span> <span class="keyword">this</span>.keys.down:
+      <span class="keyword">case</span> <span class="keyword">this</span>.keys.space:
+        <span class="keyword">return</span> <span class="keyword">this</span>.collection.next();
+      <span class="keyword">case</span> <span class="keyword">this</span>.keys.v_key:
+      <span class="keyword">case</span> <span class="keyword">this</span>.keys.d_key:
+        mainView.navControlsView.downloadImage();
+        <span class="keyword">break</span>;
+    }
+  }
+
+});
+
+Redditp.ArrowsView = Backbone.View.extend({
+
+  el: <span class="string">'body'</span>,
+
+  events: {
+    <span class="string">'click .prevArrow'</span>: <span class="string">'prev'</span>,
+    <span class="string">'click .nextArrow'</span>: <span class="string">'next'</span>,
+  },
+
+  prev: <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span><span class="keyword">this</span>.collection.prev();},
+  next: <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span><span class="keyword">this</span>.collection.next();}
+
+});</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-21">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-21">&#182;</a>
+              </div>
+              <p>Backbone version - redditp-replacement.herokuapp.com</p>
+<p>Original version - redditp.com</p>
+<p>Backbone Rewrite Author: Chuck Lauer Vose (<a href="http://github.com/vosechu">http://github.com/vosechu</a>)</p>
+<p>Original Author: Yuval Greenfield (<a href="http://uberpython.wordpress.com">http://uberpython.wordpress.com</a>)</p>
+<p>Favicon by Double-J designs <a href="http://www.iconfinder.com/icondetails/68600/64/_icon">http://www.iconfinder.com/icondetails/68600/64/_icon</a></p>
+<p>HTML based on <a href="http://demo.marcofolio.net/fullscreen_image_slider/">http://demo.marcofolio.net/fullscreen_image_slider/</a></p>
+<p>Author of slideshow base :      Marco Kuiper (<a href="http://www.marcofolio.net/">http://www.marcofolio.net/</a>)</p>
+<h2>Examples</h2>
+<p><a href="http://redditp-replacement.herokuapp.com/r/funny">http://redditp-replacement.herokuapp.com/r/funny</a>
+<a href="http://redditp-replacement.herokuapp.com/r/funny+science+arresteddevelopment">http://redditp-replacement.herokuapp.com/r/funny+science+arresteddevelopment</a></p>
+<h2>Hotkeys</h2>
+<table>
+<thead>
+<tr>
+<th>Hotkey</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>arrows</td>
+<td>navigation</td>
+</tr>
+<tr>
+<td>c</td>
+<td>collapse/expand nav bar</td>
+</tr>
+<tr>
+<td>d/v</td>
+<td>download current image</td>
+</tr>
+</tbody>
+</table>
+<h2>Rationale for rewrite</h2>
+<p>Rewrites and forks are never a pretty affair. I chose to rewrite after
+making some attempts to get pull requests accepted. But my functionality
+was deemed sufficiently unique to me that I should fork.</p>
+<p>After that was done, I started tailoring the app to my needs; one of
+which was to understand the code. Trying to add features was a bear
+and the code was very complex. It&#39;s still complex, but it&#39;s less than
+50% as long and feels at least twice as fast.</p>
+<h2>Groking the code</h2>
+<p>If you want to grok the code, please start with the WindowView and the
+PhotoView before moving on to the PhotoCollection. WindowView kicks off
+the whole process, including the initial fetch and adding the other
+views to the page. Views in this app are used mostly for coordination,
+they do not maintain most of the HTML except for a few templates.</p>
+<p>The core concept is that the collection has two sets of events, one
+for changing the currently displayed photo, and one set for downloading
+and rendering new photos. <code>change:currentPhotoIndex</code> is about changing
+the currently displayed photo. The fairly standard <code>add</code> and <code>reset</code>
+remain for updating the collection. Having these two sets of events
+allows the UI to remain separate from the activity of downloading
+images in the background.</p>
+
+            </div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>
