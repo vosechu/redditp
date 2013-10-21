@@ -13,7 +13,16 @@ body { overflow:hidden; background-color: #000; color:#fff;}
   height: 100%;
   z-index:-999;
 }
-#pictureSlider div { height:100%; width:100%; position:absolute; z-index:-999; }
+.photo {
+  height:100%;
+  z-index:-999;
+  display: none;
+}
+.photo img {
+  display: block;
+  margin: 0 auto;
+  height: 100%;
+}
 
 /* NAVIGATION BOX */
 #navigationBoxes {float: left;}

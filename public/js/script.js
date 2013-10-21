@@ -111,7 +111,7 @@ Redditp.PhotoCollection = Backbone.Collection.extend({
       return post;
     }, this);
 
-    return postsWithImages;
+    return posts;
   },
   probablyImage: function (url) {
     return (typeof(url) !== 'undefined' &&
@@ -157,7 +157,7 @@ Redditp.PhotoView = Backbone.View.extend({
 
   fadeInSpeed: 1000,
   el: '#pictureSlider',
-  template: _.template("<div class=\"photo\" id=\"photo-<%= cid %>\" />"),
+  template: _.template("<div class=\"photo\" id=\"photo-<%= cid %>\"><img src=\"<%= imageUrl %>\"></div>"),
 
   initialize: function() {
     this.listenTo(this.collection, "add", this.addOne);
@@ -172,15 +172,7 @@ Redditp.PhotoView = Backbone.View.extend({
   },
 
   addOne: function(photo) {
-    // Create a new div and apply the CSS
-    var cssMap = {};
-    cssMap['display'] = "none";
-    cssMap['background-image'] = "url(" + photo.get('url') + ")";
-    cssMap['background-repeat'] = "no-repeat";
-    cssMap['background-size'] = "contain";
-    cssMap['background-position'] = "center";
-
-    var divNode = $(this.template({cid: photo.cid})).css(cssMap);
+    var divNode = $(this.template({cid: photo.cid, imageUrl: photo.get('url')}));
 
     this.$el.append(divNode);
   },
