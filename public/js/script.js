@@ -25,6 +25,7 @@ Redditp.PhotoCollection = Backbone.Collection.extend({
   model: Redditp.Photo,
   nextPageId: '',
   currentPhotoIndex: -1,
+  postUrls: [],
 
   // `url` and `getQueryString` inspect the current document to determine
   // which subreddit(s) you want to look at. In addition, we store the
@@ -97,13 +98,21 @@ Redditp.PhotoCollection = Backbone.Collection.extend({
       return post.data;
     }, this);
 
+    // Throw out any posts that are duplicates
+    posts = _.reject(posts, function (post) {
+      if (!_.contains(this.postUrls, post.url)) {
+        this.postUrls.push(post.url);
+        return false;
+      }
+      return true;
+    }, this);
+
     // Throw out any posts that don't look like images
     posts =  _.filter(posts, function (post) {
       return this.probablyImage(post.url);
     }, this);
 
     // Add extension to links to force them to download as image from imgur
-    // FIXME: cleanup to only add when needed and from imgur
     posts = _.map(posts, function (post) {
       if (this.hasImgurDomain(post.url)) {
         if (this.hasNoImageExtension(post.url)) {
@@ -129,7 +138,7 @@ Redditp.PhotoCollection = Backbone.Collection.extend({
     }
   },
   hasNoImageExtension: function (url) {
-    return !!(/\..{3,4}$/).exec(url);
+    return !(/\..{3,4}$/).exec(url);
   }
 
 });
