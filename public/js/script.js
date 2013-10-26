@@ -106,7 +106,9 @@ Redditp.PhotoCollection = Backbone.Collection.extend({
     // FIXME: cleanup to only add when needed and from imgur
     posts = _.map(posts, function (post) {
       if (this.hasImgurDomain(post.url)) {
-        post.url += '.jpg';
+        if (this.hasNoImageExtension(post.url)) {
+          post.url += '.jpg';
+        }
       }
       return post;
     }, this);
@@ -116,16 +118,18 @@ Redditp.PhotoCollection = Backbone.Collection.extend({
   probablyImage: function (url) {
     return (typeof(url) !== 'undefined' &&
       url !== '' &&
-      ( this.hasImageExtension(url) ||
-        this.hasImgurDomain(url)));
+      this.hasImageExtension(url));
   },
   hasImageExtension: function (url) {
-    return !!(/(jpg|png|jpeg|bmp)$/).exec(url);
+    return !!(/(jpg|png|jpeg)$/).exec(url);
   },
   hasImgurDomain: function (url) {
     if (!!(/imgur.com\//).exec(url)) {
       return !(/imgur.com\/a\//).exec(url);
     }
+  },
+  hasNoImageExtension: function (url) {
+    return !!(/\..{3,4}$/).exec(url);
   }
 
 });
