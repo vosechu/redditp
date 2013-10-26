@@ -214,6 +214,7 @@ Redditp.NavControlsView = Backbone.View.extend({
     this.listenTo(this.collection, "add", this.addOne);
     this.listenTo(this.collection, "reset", this.addAll);
     this.listenTo(this.collection, "change:currentPhotoIndex", this.change);
+    this.toggleCollapse();
   },
 
   addAll: function (collection) {
