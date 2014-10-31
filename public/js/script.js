@@ -25,7 +25,8 @@ Redditp.PhotoCollection = Backbone.Collection.extend({
   model: Redditp.Photo,
   nextPageId: '',
   currentPhotoIndex: -1,
-  postUrls: [],
+  downloadedUrls: [],
+  seenUrls: localStorage,
 
   // `url` and `getQueryString` inspect the current document to determine
   // which subreddit(s) you want to look at. In addition, we store the
@@ -59,12 +60,20 @@ Redditp.PhotoCollection = Backbone.Collection.extend({
     if (this.currentPhotoIndex > (this.models.length - 5)) {
       this.fetch({remove: false});
     }
+
+    // Mark this photo as seen so we don't view it again
+    if (typeof(this.models[this.currentPhotoIndex]) !== "undefined") {
+      this.seenUrls[this.models[this.currentPhotoIndex].get('url')] = "true";
+    }
+
     return this.models[this.currentPhotoIndex];
   },
 
   seek: function (index) {
-    this.currentPhotoIndex = index;
-    this.trigger('change:currentPhotoIndex');
+    // if (typeof(this.models[this.currentPhotoIndex]) !== "undefined") {
+      this.currentPhotoIndex = index;
+      this.trigger('change:currentPhotoIndex');
+    // }
   },
   next: function () {
     this.seek(this.currentPhotoIndex + 1);
@@ -90,6 +99,10 @@ Redditp.PhotoCollection = Backbone.Collection.extend({
     // Create array of model attributes
     var posts = this.postsWithImages(response);
 
+    if (posts.length === 0) {
+      this.fetch(options);
+    }
+
     return posts;
   },
   postsWithImages: function (response) {
@@ -100,11 +113,22 @@ Redditp.PhotoCollection = Backbone.Collection.extend({
 
     // Throw out any posts that are duplicates
     posts = _.reject(posts, function (post) {
-      if (!_.contains(this.postUrls, post.url)) {
-        this.postUrls.push(post.url);
+      if (!_.contains(this.downloadedUrls, post.url)) {
+        this.downloadedUrls.push(post.url);
         return false;
       }
       return true;
+    }, this);
+
+    // Throw out any posts that we've seen before
+    // These will be marked as seen in `change`
+    posts = _.reject(posts, function (post) {
+      if (this.seenUrls[post.url] === "true") {
+        return true;
+      }
+      else {
+        return false;
+      }
     }, this);
 
     // Throw out any posts that don't look like images
@@ -168,7 +192,7 @@ Redditp.WindowView = Backbone.View.extend({
 
 Redditp.PhotoView = Backbone.View.extend({
 
-  fadeInSpeed: 1000,
+  fadeInSpeed: 250,
   el: '#pictureSlider',
   template: _.template("<div class=\"photo\" id=\"photo-<%= cid %>\"><img src=\"<%= imageUrl %>\"></div>"),
 
@@ -195,6 +219,7 @@ Redditp.PhotoView = Backbone.View.extend({
     var oldPhoto = $('.photo.active');
 
     oldPhoto.removeClass('active').hide();
+    $('.background-image').css('background-image', 'url(' + photo.get('url') + ')')
     $("#photo-" + photo.cid).addClass('active').fadeIn(this.fadeInSpeed);
   }
 
@@ -399,6 +424,8 @@ Redditp.ArrowsView = Backbone.View.extend({
 //
 // ## TODO
 //
+// * Progress bar when loading new pages if there are no new images
+// * Toggle for showing images we've seen before
 // * Big number bar across the bottom
 // * URL at hatsnpants.com
 // * Add Gif button back in
@@ -412,3 +439,6 @@ Redditp.ArrowsView = Backbone.View.extend({
 // * Have an auto-complete for subreddit entry w/ activity
 // * Plus button to add multiple subreddits (and minus button)
 // * Graphical download button
+
+// * Use localStorage to store which images we've ever seen before
+// * Ensure that if no images are new, it downloads the next page
